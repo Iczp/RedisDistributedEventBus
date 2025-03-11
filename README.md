@@ -1,490 +1,145 @@
-# IczpNet.LogManagement
+# IczpNet.RedisDistributedEventBus
 
-An abp module that provides standard tree structure entity implement.
-
-### Create project by Abp Cli
-
-```
-abp new IczpNet.OpenIddict -t module --no-ui -v 7.3.0
-```
+用Redis的发布与订阅 实现Abp分布式事件
 
 
 
-### Build
+## Distributed Event Bus Redis Integration
 
-```
-dotnet build --configuration Release
-```
+本文档解释如何配置Redis作为分布式事件总线提供程序，使用IczpNet.RedisDistributedEventBus。请参阅分布式事件总线文档以了解如何使用分布式事件总线系统。
 
-https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-build
+### 安装
 
-### Public to Nuget.org
+使用NuGet包管理器将IczpNet.RedisDistributedEventBus包添加到您的项目中。
 
-```
-dotnet nuget push "src/*/bin/Release/*0.1.2.nupkg" --skip-duplicate -k {APIKEY} --source https://api.nuget.org/v3/index.json
-```
+如果尚未安装NuGet包管理器，请先安装。
 
-## Dependency
+在Visual Studio中，打开您的项目。
 
-### Volo.Abp.Identity
+在“解决方案资源管理器”中，右键点击您的项目，选择“管理NuGet包”。
+
+在NuGet包管理器中，搜索“IczpNet.RedisDistributedEventBus”并安装。
+
+或者，您可以使用命令行安装：
+
 
 ```bash
-abp add-module Volo.Abp.Identity
+dotnet add package IczpNet.RedisDistributedEventBus
 ```
 
+如果您使用的是ABP框架，您还需要将IczpNet.RedisDistributedEventBus包添加到您的模块依赖中：
 
-
-### Volo.AuditLogging
-
-```bash
-abp add-module Volo.AuditLogging
+```csharp
+[DependsOn(typeof(RedisDistributedEventBusModule))]
+public class YourModule : AbpModule
+{
+    // 模块的其他配置
+}
 ```
 
-## Usage
+### 配置
 
-### Api : `xxx.HttpApi.Host/xxHttpApiHostModule`
+您可以使用标准配置系统进行配置，例如使用appsettings.json文件或使用选项类。
+
+`appsettings.json`文件配置
+这是配置Redis设置的最简单方法。它也非常强大，因为您可以使用ASP.NET Core支持的任何其他配置源（如环境变量）。
+
+示例：使用默认配置连接到本地Redis服务器的最小配置
+
+```json
+{
+  "Redis": {
+    "Configuration": "127.0.0.1",
+    "PrefixKey": "IczpNetEventBus:"
+  }
+}
+```
+
+PrefixKey是此应用程序的事件总线通道名称前缀。
+
+Configuration是Redis服务器的地址。
+
+
+ConnectionString可以是任何有效的Redis连接字符串，包括主机名、端口、密码等。
+
+### 选项类
+
+RedisEventBusOptions类可用于配置Redis事件总线的选项。
 
 ```c#
- Configure<AbpAspNetCoreMvcOptions>(options =>
- {
-     options.ConventionalControllers.Create(typeof(LogManagementApplicationModule).Assembly);
- });
-```
-
-
-
-## Installation
-
-#### Install the following NuGet packages. (see how)
-
-- IczpNet.LogManagement.Domain
-- IczpNet.LogManagement.Application
-- IczpNet.LogManagement.Application.Contracts
-- IczpNet.LogManagement.Domain.Shared
-
-#### Add `DependsOn(typeof(LogManagementXxxModule))` attribute to configure the module dependencies. 
-
-1. ### `IczpNet.LogManagementDemo.Domain` 
-
-   `F:\Dev\abpvnext\Iczp.LogManagement\Example\src\IczpNet.LogManagementDemo.Domain\LogManagementDemoDomainModule.cs`
-
-   ```c#
-   [DependsOn(typeof(LogManagementDomainModule))]
-   ```
-
-2. ###  `IczpNet.LogManagementDemo.Domain.Shared`
-
-   ```c#
-   [DependsOn(typeof(LogManagementDomainSharedModule))]
-   ```
-
-
-5. ### `IczpNet.LogManagementDemo.Application.Contracts`
-
-   ```c#
-   [DependsOn(typeof(LogManagementApplicationContractsModule))]
-   ```
-
-6. ###  `IczpNet.LogManagementDemo.Application`
-
-   ```c#
-   [DependsOn(typeof(LogManagementApplicationModule))]
-   ```
-
-   
-
-## Internal structure
-
-### IczpNet.LogManagement.Domain
-
-### IczpNet.LogManagement.Application.Contracts
-
-### Dtos
-
-#### `IAuditLogAppService`
-
-```C#
-using IczpNet.LogManagement.AuditLogs.Dtos;
-using System;
-using Volo.Abp.Application.Services;
-
-namespace IczpNet.LogManagement.AuditLogs;
-
-public interface IAuditLogAppService : IReadOnlyAppService<AuditLogDetailDto, AuditLogDto, Guid, AuditLogGetListInput>
+public class RedisDistributedEventBusOptions
 {
-
+    public string PrifixKey { get; set; } = "IczpNet.RedisDistributedEventBus";
 }
 
 ```
 
-#### `AuditLogDto`
+### 订阅事件  实现接口： `IDistributedEventHandler<SampleDto>`
 
-```C#
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Volo.Abp.Application.Dtos;
-
-namespace IczpNet.LogManagement.AuditLogs.Dtos;
-
-public class AuditLogDto : EntityDto<Guid>
-{
-    public virtual string ApplicationName { get; set; }
-
-    public virtual Guid? UserId { get; set; }
-
-    public virtual string UserName { get; set; }
-
-    public virtual Guid? TenantId { get; set; }
-
-    public virtual string TenantName { get; set; }
-
-    public virtual DateTime ExecutionTime { get; set; }
-
-    public virtual int ExecutionDuration { get; set; }
-
-    public virtual string ClientIpAddress { get; set; }
-
-    public virtual string ClientName { get; set; }
-
-    public virtual string ClientId { get; set; }
-
-    public virtual string BrowserInfo { get; set; }
-
-    public virtual string HttpMethod { get; set; }
-
-    public virtual string Url { get; set; }
-
-    public virtual int? HttpStatusCode { get; set; }
-}
-
-```
-
-#### `AuditLogDetailDto`
-
-```C#
-using System;
-using Volo.Abp.Data;
-
-namespace IczpNet.LogManagement.AuditLogs.Dtos;
-
-public class AuditLogDetailDto : AuditLogDto, IHasExtraProperties
-{
-    public virtual Guid? ImpersonatorUserId { get; set; }
-
-    public virtual string ImpersonatorUserName { get; set; }
-
-    public virtual Guid? ImpersonatorTenantId { get; set; }
-
-    public virtual string ImpersonatorTenantName { get; set; }
-
-    public virtual string CorrelationId { get; set; }
-
-    public virtual string Comments { get; set; }
-
-    public virtual string Exceptions { get; set; }
-
-    public ExtraPropertyDictionary ExtraProperties { get; set; }
-}
-
-```
-
-#### ICurrentUserSecurityLogAppService
-
-```C#
-using IczpNet.LogManagement.SecurityLogs.Dtos;
-using System;
-using Volo.Abp.Application.Services;
-
-namespace IczpNet.LogManagement.SecurityLogs;
-
-public interface ICurrentUserSecurityLogAppService : IReadOnlyAppService<SecurityLogDetailDto, SecurityLogDto, Guid, CurrentUserSecurityLogGetListInput>
-{
-
-}
-
-```
-
-#### ISecurityLogAppService
-
-```C#
-using IczpNet.LogManagement.SecurityLogs.Dtos;
-using System;
-using Volo.Abp.Application.Services;
-
-namespace IczpNet.LogManagement.SecurityLogs;
-
-public interface ISecurityLogAppService : IReadOnlyAppService<SecurityLogDetailDto, SecurityLogDto, Guid, SecurityLogGetListInput>
-{
-
-}
-
-```
-
-
-
-#### SecurityLogs
-
-```C#
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Volo.Abp.Application.Dtos;
-
-namespace IczpNet.LogManagement.SecurityLogs.Dtos;
-
-public class SecurityLogDto : EntityDto<Guid>
-{
-    public Guid? TenantId { get; set; }
-
-    public string ApplicationName { get; set; }
-
-    public string Identity { get; set; }
-
-    public string Action { get; set; }
-
-    public Guid? UserId { get; set; }
-
-    public string UserName { get; set; }
-
-    public string TenantName { get; set; }
-
-    public string ClientId { get; set; }
-
-    public string CorrelationId { get; set; }
-
-    public string ClientIpAddress { get; set; }
-
-    public string BrowserInfo { get; set; }
-
-    public DateTime CreationTime { get; set; }
-}
-
-```
-
-
-
-### IczpNet.LogManagement.Application
-
-#### `AuditLogAppService`
-
-```C#
-using IczpNet.LogManagement.AuditLogs.Dtos;
-using IczpNet.LogManagement.BaseAppServices;
-using IczpNet.LogManagement.Permissions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+```c#
+using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
-using Volo.Abp.AuditLogging;
+using Volo.Abp.DependencyInjection;
+using Volo.Abp.Domain.Services;
+using Volo.Abp.EventBus.Distributed;
 
-namespace IczpNet.LogManagement.AuditLogs;
+namespace IczpNet.RedisDistributedEventBus.Samples;
 
-public class AuditLogAppService : BaseGetListAppService<AuditLog, AuditLogDetailDto, AuditLogDto, Guid, AuditLogGetListInput>, IAuditLogAppService
+public class SampleDistributedEventHandler : DomainService, IDistributedEventHandler<SampleDto>, ITransientDependency
 {
-    protected override string GetListPolicyName { get; set; } = LogManagementPermissions.AuditLogPermissions.GetList;
-    protected override string GetPolicyName { get; set; } = LogManagementPermissions.AuditLogPermissions.GetItem;
-
-    public AuditLogAppService(IAuditLogRepository repository) : base(repository)
+    public async Task HandleEventAsync(SampleDto eventData)
     {
-    }
+        Logger.LogWarning($"Handled SampleDto: {eventData.Value}");
 
-    //[HttpGet]
-    protected override async Task<IQueryable<AuditLog>> CreateFilteredQueryAsync(AuditLogGetListInput input)
-    {
-        var query = (await base.CreateFilteredQueryAsync(input))
-            .WhereIf(input.UserId.HasValue, x => x.UserId == input.UserId)
-            .WhereIf(!string.IsNullOrWhiteSpace(input.UserName), x => x.UserName == input.UserName)
-            .WhereIf(input.TenantId.HasValue, x => x.TenantId == input.TenantId)
-            .WhereIf(!string.IsNullOrWhiteSpace(input.TenantName), x => x.TenantName == input.TenantName)
-            .WhereIf(input.ImpersonatorTenantId.HasValue, x => x.ImpersonatorTenantId == input.ImpersonatorTenantId)
-            .WhereIf(!string.IsNullOrWhiteSpace(input.ImpersonatorTenantName), x => x.ImpersonatorTenantName == input.ImpersonatorTenantName)
-            .WhereIf(input.ImpersonatorUserId.HasValue, x => x.ImpersonatorUserId == input.ImpersonatorUserId)
-            .WhereIf(!string.IsNullOrWhiteSpace(input.ImpersonatorUserName), x => x.ImpersonatorUserName == input.ImpersonatorUserName)
-            .WhereIf(!string.IsNullOrWhiteSpace(input.CorrelationId), x => x.CorrelationId == input.CorrelationId)
-            .WhereIf(!string.IsNullOrWhiteSpace(input.ClientId), x => x.ClientId == input.ClientId)
-            .WhereIf(!string.IsNullOrWhiteSpace(input.ClientName), x => x.ClientName == input.ClientName)
-            .WhereIf(!string.IsNullOrWhiteSpace(input.ClientIpAddress), x => x.ClientIpAddress == input.ClientIpAddress)
-            .WhereIf(!string.IsNullOrWhiteSpace(input.ApplicationName), x => x.ApplicationName == input.ApplicationName)
-            .WhereIf(input.HttpMethods != null && input.HttpMethods.Count != 0, x => input.HttpMethods!.Contains(x.HttpMethod))
-            .WhereIf(input.HttpStatusCodes != null && input.HttpStatusCodes.Count != 0, x => input.HttpStatusCodes!.Contains(x.HttpStatusCode))
-
-            .WhereIf(input.MinExecutionDuration.HasValue, x => x.ExecutionDuration > input.MinExecutionDuration)
-            .WhereIf(input.MaxExecutionDuration.HasValue, x => x.ExecutionDuration <= input.MaxExecutionDuration)
-
-            .WhereIf(input.StartExecutionTime.HasValue, x => x.ExecutionTime > input.StartExecutionTime)
-            .WhereIf(input.EndExecutionTime.HasValue, x => x.ExecutionTime <= input.EndExecutionTime)
-
-            .WhereIf(string.IsNullOrWhiteSpace(input.Comments), x => x.Comments.Contains(input.Comments))
-            .WhereIf(string.IsNullOrWhiteSpace(input.BrowserInfo), x => x.BrowserInfo.Contains(input.BrowserInfo))
-        ;
-
-        return query;
-    }
-
-    protected override IQueryable<AuditLog> ApplyDefaultSorting(IQueryable<AuditLog> query)
-    {
-        return query.OrderByDescending(x => x.ExecutionTime);
+        await Task.CompletedTask;
     }
 }
 
 ```
 
-#### `SecurityLogAppService`
+在这个示例中，MyEventHandler实现了`IDistributedEventHandler<SampleDto>`接口，用于处理MyEvent事件。PublishEventAsync方法演示了如何发布事件。
+
+
+
+### 发布事件 await DistributedEventBus.PublishAsync(ret)
 
 ```C#
-using IczpNet.LogManagement.SecurityLogs.Dtos;
-using IczpNet.LogManagement.Permissions;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using Volo.Abp.Identity;
-using Volo.Abp.Domain.Repositories;
-using IczpNet.LogManagement.BaseAppServices;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Volo.Abp;
+using Volo.Abp.EventBus.Distributed;
 
-namespace IczpNet.LogManagement.SecurityLogs;
+namespace IczpNet.RedisDistributedEventBus.Samples;
 
-public class SecurityLogAppService : BaseGetListAppService<IdentitySecurityLog, SecurityLogDetailDto, SecurityLogDto, Guid, SecurityLogGetListInput>, ISecurityLogAppService
+[Area(RedisDistributedEventBusRemoteServiceConsts.ModuleName)]
+[RemoteService(Name = RedisDistributedEventBusRemoteServiceConsts.RemoteServiceName)]
+[Route("api/RedisDistributedEventBus/sample")]
+public class SampleController(
+    ISampleAppService sampleAppService,
+    IDistributedEventBus distributedEventBus
+    ) : RedisDistributedEventBusController, ISampleAppService
 {
-    protected override string GetListPolicyName { get; set; } = LogManagementPermissions.SecurityLogPermissions.GetList;
-    protected override string GetPolicyName { get; set; } = LogManagementPermissions.SecurityLogPermissions.GetItem;
+    private readonly ISampleAppService _sampleAppService = sampleAppService;
 
-    public SecurityLogAppService(IRepository<IdentitySecurityLog, Guid> repository) : base(repository)
+    public IDistributedEventBus DistributedEventBus { get; } = distributedEventBus;
+
+    [HttpPost]
+    public async Task<SampleDto> PostAsync()
     {
-       
-    }
-
-    protected override async Task<IQueryable<IdentitySecurityLog>> CreateFilteredQueryAsync(SecurityLogGetListInput input)
-    {
-        var query = (await base.CreateFilteredQueryAsync(input))
-            .WhereIf(!string.IsNullOrWhiteSpace(input.Identity), x => x.Identity == input.Identity)
-            .WhereIf(input.UserId.HasValue, x => x.UserId == input.UserId)
-            .WhereIf(!string.IsNullOrWhiteSpace(input.UserName), x => x.UserName == input.UserName)
-            .WhereIf(input.TenantId.HasValue, x => x.TenantId == input.TenantId)
-            .WhereIf(!string.IsNullOrWhiteSpace(input.TenantName), x => x.TenantName == input.TenantName)
-            .WhereIf(!string.IsNullOrWhiteSpace(input.CorrelationId), x => x.CorrelationId == input.CorrelationId)
-            .WhereIf(!string.IsNullOrWhiteSpace(input.ClientId), x => x.ClientId == input.ClientId)
-            .WhereIf(!string.IsNullOrWhiteSpace(input.ClientIpAddress), x => x.ClientIpAddress == input.ClientIpAddress)
-            .WhereIf(!string.IsNullOrWhiteSpace(input.ApplicationName), x => x.ApplicationName == input.ApplicationName)
-            .WhereIf(input.Actions != null && input.Actions.Count != 0, x => input.Actions!.Contains(x.Action))
-            .WhereIf(input.StartCreationTime.HasValue, x => x.CreationTime > input.StartCreationTime)
-            .WhereIf(input.EndCreationTime.HasValue, x => x.CreationTime <= input.EndCreationTime)
-            .WhereIf(!string.IsNullOrWhiteSpace(input.BrowserInfo), x => x.BrowserInfo.Contains(input.BrowserInfo))
-        ;
-
-        return query;
-    }
-
-    protected override IQueryable<IdentitySecurityLog> ApplyDefaultSorting(IQueryable<IdentitySecurityLog> query)
-    {
-        return query.OrderByDescending(x => x.CreationTime);
-        //return base.ApplyDefaultSorting(query);
-    }
-}
-
-```
-
-#### `CurrentUserSecurityLogAppService`
-
-```C#
-using IczpNet.LogManagement.SecurityLogs.Dtos;
-using IczpNet.LogManagement.Permissions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Volo.Abp.Identity;
-using Volo.Abp.Domain.Repositories;
-using IczpNet.LogManagement.BaseAppServices;
-using Volo.Abp.Domain.Entities;
-using Volo.Abp.Auditing;
-
-namespace IczpNet.LogManagement.SecurityLogs;
-
-public class CurrentUserSecurityLogAppService : BaseGetListAppService<IdentitySecurityLog, SecurityLogDetailDto, SecurityLogDto, Guid, CurrentUserSecurityLogGetListInput>, ICurrentUserSecurityLogAppService
-{
-    protected override string GetListPolicyName { get; set; } = LogManagementPermissions.CurrentUserSecurityLogPermissions.GetList;
-    protected override string GetPolicyName { get; set; } = LogManagementPermissions.CurrentUserSecurityLogPermissions.GetItem;
-
-    public CurrentUserSecurityLogAppService(IRepository<IdentitySecurityLog, Guid> repository) : base(repository)
-    {
-
-    }
-
-    protected override async Task<IQueryable<IdentitySecurityLog>> CreateFilteredQueryAsync(CurrentUserSecurityLogGetListInput input)
-    {
-        var query = (await base.CreateFilteredQueryAsync(input))
-            .Where(x => x.TenantId == CurrentUser.TenantId)
-            //.Where(x => x.UserId == CurrentUser.Id)
-            .Where(x => x.UserName == CurrentUser.UserName)
-            .WhereIf(!string.IsNullOrWhiteSpace(input.Identity), x => x.Identity == input.Identity)
-            .WhereIf(!string.IsNullOrWhiteSpace(input.CorrelationId), x => x.CorrelationId == input.CorrelationId)
-            .WhereIf(!string.IsNullOrWhiteSpace(input.ClientId), x => x.ClientId == input.ClientId)
-            .WhereIf(!string.IsNullOrWhiteSpace(input.ClientIpAddress), x => x.ClientIpAddress == input.ClientIpAddress)
-            .WhereIf(!string.IsNullOrWhiteSpace(input.ApplicationName), x => x.ApplicationName == input.ApplicationName)
-            .WhereIf(input.Actions != null && input.Actions.Count != 0, x => input.Actions!.Contains(x.Action))
-            .WhereIf(input.StartCreationTime.HasValue, x => x.CreationTime > input.StartCreationTime)
-            .WhereIf(input.EndCreationTime.HasValue, x => x.CreationTime <= input.EndCreationTime)
-            .WhereIf(!string.IsNullOrWhiteSpace(input.BrowserInfo), x => x.BrowserInfo.Contains(input.BrowserInfo))
-        ;
-
-        return query;
-    }
-
-    protected override async Task<IdentitySecurityLog> GetEntityByIdAsync(Guid id)
-    {
-        var entity = await base.GetEntityByIdAsync(id);
-
-        //if (entity.UserId != CurrentUser.Id)
-        if (entity.UserName != CurrentUser.UserName)
+        var ret = new SampleDto()
         {
-            throw new EntityNotFoundException($"Not such entity by current user['{CurrentUser.Name}'],Entity id:{id}");
-        }
-        return await base.GetEntityByIdAsync(id);
+            Value = DateTime.Now.Ticks
+        };
+        await DistributedEventBus.PublishAsync(ret); //发布事件 
+        return ret;
+
     }
 
-    protected override IQueryable<IdentitySecurityLog> ApplyDefaultSorting(IQueryable<IdentitySecurityLog> query)
-    {
-        return query.OrderByDescending(x => x.CreationTime);
-        //return base.ApplyDefaultSorting(query);
-    }
 }
 
 ```
 
-### AutoMappers
 
-#### LogManagementApplicationAutoMapperProfile
-
-```C#
-using AutoMapper;
-using IczpNet.LogManagement.AuditLogs.Dtos;
-using IczpNet.LogManagement.SecurityLogs.Dtos;
-using Volo.Abp.AuditLogging;
-using Volo.Abp.Identity;
-
-namespace IczpNet.LogManagement.AutoMappers;
-
-public class LogManagementApplicationAutoMapperProfile : Profile
-{
-    public LogManagementApplicationAutoMapperProfile()
-    {
-        /* You can configure your AutoMapper mapping configuration here.
-         * Alternatively, you can split your mapping configurations
-         * into multiple profile classes for a better organization. */
-
-        //AuditLog
-        CreateMap<AuditLog, AuditLogDto>();
-        CreateMap<AuditLog, AuditLogDetailDto>()
-            .MapExtraProperties();
-
-        //SecurityLog
-        CreateMap<IdentitySecurityLog, SecurityLogDto>();
-        CreateMap<IdentitySecurityLog, SecurityLogDetailDto>()
-            .MapExtraProperties();
-    }
-}
-
-```
 
