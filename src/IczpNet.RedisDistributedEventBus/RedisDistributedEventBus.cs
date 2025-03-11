@@ -22,60 +22,61 @@ using Volo.Abp.Timing;
 using Volo.Abp.Tracing;
 using Volo.Abp.Uow;
 
-namespace IczpNet.RedisDistributedEventBus.EventBus;
+namespace IczpNet.RedisDistributedEventBus;
 
 [Dependency(ReplaceServices = true)]
 [ExposeServices(typeof(IDistributedEventBus), typeof(RedisDistributedEventBus), typeof(IRedisDistributedEventBus))]
-public class RedisDistributedEventBus : DistributedEventBusBase, IRedisDistributedEventBus, ISingletonDependency
+public class RedisDistributedEventBus(
+    IOptions<RedisDistributedEventBusOptions> options,
+    IServiceScopeFactory serviceScopeFactory,
+    IConnectionMultiplexer redis,
+    IJsonSerializer jsonSerializer,
+    ILogger<RedisDistributedEventBus> logger,
+    ICurrentTenant currentTenant,
+    IUnitOfWorkManager unitOfWorkManager,
+    IOptions<AbpDistributedEventBusOptions> abpDistributedEventBusOptions,
+    IGuidGenerator guidGenerator,
+    IClock clock,
+    IEventHandlerInvoker eventHandlerInvoker,
+    ILocalEventBus localEventBus,
+    ICorrelationIdProvider correlationIdProvider) : DistributedEventBusBase(
+    serviceScopeFactory,
+    currentTenant,
+    unitOfWorkManager,
+    abpDistributedEventBusOptions,
+    guidGenerator,
+    clock,
+    eventHandlerInvoker,
+    localEventBus,
+    correlationIdProvider), IRedisDistributedEventBus, ISingletonDependency
 {
-    protected IConnectionMultiplexer Redis { get; }
+    protected RedisDistributedEventBusOptions Config { get; } = options.Value;
+    protected IConnectionMultiplexer Redis { get; } = redis;
     protected ISubscriber? Subscriber { get; }
-    protected ILogger<RedisDistributedEventBus> Logger { get; }
-    protected IJsonSerializer JsonSerializer { get; }
-    protected virtual string ChannelPrefix { get; } = "abp:eventbus:";
-
+    protected ILogger<RedisDistributedEventBus> Logger { get; } = logger ?? NullLogger<RedisDistributedEventBus>.Instance;
+    protected IJsonSerializer JsonSerializer { get; } = jsonSerializer;
+    protected virtual string ChannelPrefix { get; } = $"{nameof(RedisDistributedEventBus)}:";
     protected ConcurrentDictionary<Type, List<IEventHandlerFactory>> HandlerFactories { get; } = new ConcurrentDictionary<Type, List<IEventHandlerFactory>>();
     protected ConcurrentDictionary<string, Type> EventTypes { get; } = new ConcurrentDictionary<string, Type>();
 
-    public RedisDistributedEventBus(
-        IServiceScopeFactory serviceScopeFactory,
-        IConnectionMultiplexer redis,
-        IJsonSerializer jsonSerializer,
-        ILogger<RedisDistributedEventBus> logger,
-        ICurrentTenant currentTenant,
-        IUnitOfWorkManager unitOfWorkManager,
-        IOptions<AbpDistributedEventBusOptions> abpDistributedEventBusOptions,
-        IGuidGenerator guidGenerator,
-        IClock clock,
-        IEventHandlerInvoker eventHandlerInvoker,
-        ILocalEventBus localEventBus,
-        ICorrelationIdProvider correlationIdProvider) : base(
-        serviceScopeFactory,
-        currentTenant,
-        unitOfWorkManager,
-        abpDistributedEventBusOptions,
-        guidGenerator,
-        clock,
-        eventHandlerInvoker,
-        localEventBus,
-        correlationIdProvider)
-    {
-        Redis = redis;
-        Logger = logger ?? NullLogger<RedisDistributedEventBus>.Instance;
-        JsonSerializer = jsonSerializer;
-        //Initialize();
-    }
-
     public virtual void Initialize()
     {
-        SubscribeHandlers(AbpDistributedEventBusOptions.Handlers);
-    }
+        Logger.LogWarning($"{nameof(RedisDistributedEventBus)} Initialize, totalCount:{AbpDistributedEventBusOptions.Handlers.Count}.");
 
+        SubscribeHandlers(AbpDistributedEventBusOptions.Handlers);
+
+        foreach (var type in AbpDistributedEventBusOptions.Handlers)
+        {
+            Logger.LogWarning($"{type.FullName} Subscribed.");
+        }
+    }
 
     private async Task ProcessEventAsync(string channel, string message)
     {
         var eventName = GetEventName(channel);
+
         var eventType = EventTypes.GetOrDefault(eventName);
+
         if (eventType == null)
         {
             return;
@@ -89,6 +90,7 @@ public class RedisDistributedEventBus : DistributedEventBusBase, IRedisDistribut
         {
             return;
         }
+
         using (CorrelationIdProvider.Change(correlationId))
         {
             await TriggerHandlersDirectAsync(eventType, eventData);
@@ -102,22 +104,42 @@ public class RedisDistributedEventBus : DistributedEventBusBase, IRedisDistribut
     protected virtual object DeserializeEventData(object message, Type eventType)
     {
         var method = typeof(RedisDistributedEventBus).GetMethod(nameof(DeserializeInternal), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
         if (method == null)
         {
             throw new Exception($"{nameof(RedisDistributedEventBus)}.${nameof(DeserializeInternal)} not found!");
         }
 
         var genericMethod = method.MakeGenericMethod(eventType);
-        return genericMethod.Invoke(this, [message]);
+
+        var result = genericMethod.Invoke(this, [message]);
+
+        if (result == null)
+        {
+            throw new Exception($"Deserialization of message to {eventType.FullName} returned null.");
+        }
+        return result;
     }
 
     private T DeserializeInternal<T>(string message)
     {
         return JsonSerializer.Deserialize<T>(message);
     }
+
     protected virtual string GetEventName(string channel)
     {
-        return channel.Replace(ChannelPrefix, "");
+        //return channel.Replace(ChannelPrefix, "");
+        return channel.Substring(ChannelPrefix.Length);
+    }
+
+    protected virtual string GetChannelName(Type eventType)
+    {
+        return GetChannelName(EventNameAttribute.GetNameOrDefault(eventType));
+    }
+
+    protected virtual string GetChannelName(string eventName)
+    {
+        return $"{ChannelPrefix}{eventName}";
     }
 
     public override IDisposable Subscribe(Type eventType, IEventHandlerFactory factory)
@@ -133,11 +155,16 @@ public class RedisDistributedEventBus : DistributedEventBusBase, IRedisDistribut
 
         if (handlerFactories.Count == 1) //TODO: Multi-threading!
         {
+
             var channelName = GetChannelName(eventType);
+
+            var channel = new RedisChannel(channelName, RedisChannel.PatternMode.Literal);
+
             var subscriber = Redis.GetSubscriber();
-            subscriber.SubscribeAsync(channelName, (channel, message) =>
+
+            subscriber.SubscribeAsync(channel, (channel, message) =>
             {
-                AsyncHelper.RunSync(async () => await ProcessEventAsync(channel, message));
+                AsyncHelper.RunSync(async () => await ProcessEventAsync(channel!, message!));
             });
 
             Logger.LogInformation($"Subscribed to Redis channel. Event Type: {eventType.FullName}, Channel: {channelName}");
@@ -222,10 +249,16 @@ public class RedisDistributedEventBus : DistributedEventBusBase, IRedisDistribut
     public override async Task ProcessFromInboxAsync(IncomingEventInfo incomingEvent, InboxConfig inboxConfig)
     {
         var eventType = EventTypes.GetOrDefault(incomingEvent.EventName);
-        if (eventType == null) return;
+
+        if (eventType == null)
+        {
+            return;
+        }
 
         var eventData = DeserializeEventData(incomingEvent.EventData, eventType);
+
         var exceptions = new List<Exception>();
+
         using (CorrelationIdProvider.Change(incomingEvent.GetCorrelationId()))
         {
             await TriggerHandlersFromInboxAsync(eventType, eventData, exceptions, inboxConfig);
@@ -236,9 +269,11 @@ public class RedisDistributedEventBus : DistributedEventBusBase, IRedisDistribut
             ThrowOriginalExceptions(eventType, exceptions);
         }
     }
+
     protected override byte[] Serialize(object eventData)
     {
         var jsonString = JsonSerializer.Serialize(eventData);
+
         return Encoding.UTF8.GetBytes(jsonString);
     }
 
@@ -257,6 +292,7 @@ public class RedisDistributedEventBus : DistributedEventBusBase, IRedisDistribut
         var body = Serialize(eventData);
         return PublishAsync(eventName, body, headersArguments, eventId, correlationId);
     }
+
     protected virtual Task PublishAsync(
          string eventName,
          byte[] body,
@@ -267,14 +303,15 @@ public class RedisDistributedEventBus : DistributedEventBusBase, IRedisDistribut
         return PublishToRedisAsync(eventName, body, headersArguments, eventId, correlationId);
     }
 
-    private async Task PublishToRedisAsync(
+    protected virtual async Task PublishToRedisAsync(
         string eventName,
         byte[] body,
         Dictionary<string, object>? headersArguments = null,
         Guid? eventId = null,
         string? correlationId = null)
     {
-        var channel = GetChannelName(eventName);
+        var channel = new RedisChannel(GetChannelName(eventName), RedisChannel.PatternMode.Literal);
+
         var subscriber = Redis.GetSubscriber();
         try
         {
@@ -285,7 +322,7 @@ public class RedisDistributedEventBus : DistributedEventBusBase, IRedisDistribut
             Logger.LogError(ex, $"Error publishing event to Redis. Event Name: {eventName}");
             throw;
         }
-        Logger.LogDebug($"Published event to Redis. Event Name: {eventName}, Channel: {channel}");
+        Logger.LogDebug($"Published event to Redis. Event Name: {eventName}, Channel: {channel}, eventId: {eventId}, correlationId: {correlationId}, headersArguments:{headersArguments}");
     }
 
     protected override Task OnAddToOutboxAsync(string eventName, Type eventType, object eventData)
@@ -294,18 +331,16 @@ public class RedisDistributedEventBus : DistributedEventBusBase, IRedisDistribut
         return base.OnAddToOutboxAsync(eventName, eventType, eventData);
     }
 
-    private List<IEventHandlerFactory> GetOrCreateHandlerFactories(Type eventType)
+    protected virtual List<IEventHandlerFactory> GetOrCreateHandlerFactories(Type eventType)
     {
-        return HandlerFactories.GetOrAdd(
-        eventType,
-        type =>
+        return HandlerFactories.GetOrAdd(eventType, type =>
         {
             var eventName = EventNameAttribute.GetNameOrDefault(type);
             EventTypes.GetOrAdd(eventName, eventType);
             return [];
-        }
-    );
+        });
     }
+
     protected override IEnumerable<EventTypeWithEventHandlerFactories> GetHandlerFactories(Type eventType)
     {
         var handlerFactoryList = new List<EventTypeWithEventHandlerFactories>();
@@ -317,16 +352,9 @@ public class RedisDistributedEventBus : DistributedEventBusBase, IRedisDistribut
                 new EventTypeWithEventHandlerFactories(handlerFactory.Key, handlerFactory.Value));
         }
 
-        return handlerFactoryList.ToArray();
+        return [.. handlerFactoryList];
     }
-    private string GetChannelName(Type eventType)
-    {
-        return GetChannelName(EventNameAttribute.GetNameOrDefault(eventType));
-    }
-    private string GetChannelName(string eventName)
-    {
-        return $"{ChannelPrefix}{eventName}";
-    }
+
     protected virtual bool ShouldTriggerEventForHandler(Type targetEventType, Type handlerEventType)
     {
         //Should trigger same type

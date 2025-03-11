@@ -1,4 +1,4 @@
-﻿namespace IczpNet.RedisDistributedEventBus.EventBus;
+﻿namespace IczpNet.RedisDistributedEventBus;
 
 public interface IRedisDistributedEventBus
 {

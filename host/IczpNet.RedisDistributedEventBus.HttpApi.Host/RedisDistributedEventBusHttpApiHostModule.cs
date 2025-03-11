@@ -60,17 +60,6 @@ public class RedisDistributedEventBusHttpApiHostModule : AbpModule
         var hostingEnvironment = context.Services.GetHostingEnvironment();
         var configuration = context.Services.GetConfiguration();
 
-        // 配置 Redis 连接
-        //var configuration = ConfigurationOptions.Parse("localhost"); // 替换为你的 Redis 连接字符串
-        var redisConnection = ConnectionMultiplexer.Connect(configuration["Redis:Configuration"]!);
-
-       
-        // 注册 IConnectionMultiplexer
-        context.Services.AddSingleton<IConnectionMultiplexer>(redisConnection);
-
-        
-    
-
 
         Configure<AbpDbContextOptions>(options =>
         {
