@@ -1,4 +1,4 @@
-$defaultVersion = "0.0.2"
+$defaultVersion = "0.0.3"
 
 $solutionFiles = Get-Item -Path ".\*.sln"
 
@@ -74,7 +74,7 @@ if ([string]::IsNullOrWhiteSpace($confirmPush)) {
     $confirmPush = "y"
 }
 
-if (!$confirmPush -eq "y") {
+if (!($confirmPush -eq "y")) {
     Write-Host "推送到 NuGet 源已取消。" -ForegroundColor Yellow
     exit 1
 }
