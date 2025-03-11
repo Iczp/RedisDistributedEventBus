@@ -10,7 +10,7 @@ public class SampleDistributedEventHandler : DomainService, IDistributedEventHan
 {
     public async Task HandleEventAsync(SampleDto eventData)
     {
-        Logger.LogError($"Handled SampleDto: {eventData.Value}");
+        Logger.LogWarning($"Handled SampleDto: {eventData.Value}");
 
         await Task.CompletedTask;
     }

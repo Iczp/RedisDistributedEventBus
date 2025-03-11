@@ -128,7 +128,6 @@ public class RedisDistributedEventBus(
 
     protected virtual string GetEventName(string channel)
     {
-        //return channel.Replace(ChannelPrefix, "");
         return channel.Substring(ChannelPrefix.Length);
     }
 
