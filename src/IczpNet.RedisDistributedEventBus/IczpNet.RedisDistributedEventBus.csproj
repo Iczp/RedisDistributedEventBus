@@ -6,11 +6,31 @@
     <TargetFrameworks>netstandard2.0;netstandard2.1;net8.0;net7.0;net6.0;</TargetFrameworks>
     <Nullable>enable</Nullable>
     <RootNamespace>IczpNet.RedisDistributedEventBus</RootNamespace>
+    <RepositoryUrl>https://github.com/Iczp/RedisDistributedEventBus.git</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/Iczp/RedisDistributedEventBus.git</PackageProjectUrl>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Authors>IczpNet</Authors>
+    <PackageIcon>IczpNet.jpg</PackageIcon>
+    <Copyright>(c) iczp.net</Copyright>
+    <Description>RedisDistributedEventBus for abp.</Description>
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="..\..\IczpNet.jpg" Link="IczpNet.jpg">
+      <PackagePath>\</PackagePath>
+      <Pack>True</Pack>
+    </None>
+    <None Include="..\..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Volo.Abp.Ddd.Domain" Version="8.1.4" />
-		<PackageReference Include="Volo.Abp.Caching.StackExchangeRedis" Version="8.1.4" />
+    <PackageReference Include="Volo.Abp.Caching.StackExchangeRedis" Version="8.1.4" />
   </ItemGroup>
 
 </Project>
