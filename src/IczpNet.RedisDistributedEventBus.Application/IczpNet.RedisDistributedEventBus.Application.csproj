@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>IczpNet.RedisDistributedEventBus</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.AutoMapper" Version="8.1.4" />
+    <PackageReference Include="Volo.Abp.Ddd.Application" Version="8.1.4" />
+    <ProjectReference Include="..\IczpNet.RedisDistributedEventBus.Application.Contracts\IczpNet.RedisDistributedEventBus.Application.Contracts.csproj" />
+    <ProjectReference Include="..\IczpNet.RedisDistributedEventBus.Domain\IczpNet.RedisDistributedEventBus.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

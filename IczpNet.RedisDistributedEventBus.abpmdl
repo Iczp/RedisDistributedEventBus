@@ -1,0 +1,79 @@
+{
+  "folders": {
+    "items": {
+      "src": {},
+      "test": {},
+      "host": {}
+    }
+  },
+  "packages": {
+    "IczpNet.RedisDistributedEventBus.Domain.Shared": {
+      "path": "src/IczpNet.RedisDistributedEventBus.Domain.Shared/IczpNet.RedisDistributedEventBus.Domain.Shared.abppkg",
+      "folder": "src"
+    },
+    "IczpNet.RedisDistributedEventBus.Domain": {
+      "path": "src/IczpNet.RedisDistributedEventBus.Domain/IczpNet.RedisDistributedEventBus.Domain.abppkg",
+      "folder": "src"
+    },
+    "IczpNet.RedisDistributedEventBus.Application.Contracts": {
+      "path": "src/IczpNet.RedisDistributedEventBus.Application.Contracts/IczpNet.RedisDistributedEventBus.Application.Contracts.abppkg",
+      "folder": "src"
+    },
+    "IczpNet.RedisDistributedEventBus.Application": {
+      "path": "src/IczpNet.RedisDistributedEventBus.Application/IczpNet.RedisDistributedEventBus.Application.abppkg",
+      "folder": "src"
+    },
+    "IczpNet.RedisDistributedEventBus.EntityFrameworkCore": {
+      "path": "src/IczpNet.RedisDistributedEventBus.EntityFrameworkCore/IczpNet.RedisDistributedEventBus.EntityFrameworkCore.abppkg",
+      "folder": "src"
+    },
+    "IczpNet.RedisDistributedEventBus.MongoDB": {
+      "path": "src/IczpNet.RedisDistributedEventBus.MongoDB/IczpNet.RedisDistributedEventBus.MongoDB.abppkg",
+      "folder": "src"
+    },
+    "IczpNet.RedisDistributedEventBus.HttpApi": {
+      "path": "src/IczpNet.RedisDistributedEventBus.HttpApi/IczpNet.RedisDistributedEventBus.HttpApi.abppkg",
+      "folder": "src"
+    },
+    "IczpNet.RedisDistributedEventBus.HttpApi.Client": {
+      "path": "src/IczpNet.RedisDistributedEventBus.HttpApi.Client/IczpNet.RedisDistributedEventBus.HttpApi.Client.abppkg",
+      "folder": "src"
+    },
+    "IczpNet.RedisDistributedEventBus.TestBase": {
+      "path": "test/IczpNet.RedisDistributedEventBus.TestBase/IczpNet.RedisDistributedEventBus.TestBase.abppkg",
+      "folder": "test"
+    },
+    "IczpNet.RedisDistributedEventBus.EntityFrameworkCore.Tests": {
+      "path": "test/IczpNet.RedisDistributedEventBus.EntityFrameworkCore.Tests/IczpNet.RedisDistributedEventBus.EntityFrameworkCore.Tests.abppkg",
+      "folder": "test"
+    },
+    "IczpNet.RedisDistributedEventBus.MongoDB.Tests": {
+      "path": "test/IczpNet.RedisDistributedEventBus.MongoDB.Tests/IczpNet.RedisDistributedEventBus.MongoDB.Tests.abppkg",
+      "folder": "test"
+    },
+    "IczpNet.RedisDistributedEventBus.Domain.Tests": {
+      "path": "test/IczpNet.RedisDistributedEventBus.Domain.Tests/IczpNet.RedisDistributedEventBus.Domain.Tests.abppkg",
+      "folder": "test"
+    },
+    "IczpNet.RedisDistributedEventBus.Application.Tests": {
+      "path": "test/IczpNet.RedisDistributedEventBus.Application.Tests/IczpNet.RedisDistributedEventBus.Application.Tests.abppkg",
+      "folder": "test"
+    },
+    "IczpNet.RedisDistributedEventBus.HttpApi.Host": {
+      "path": "host/IczpNet.RedisDistributedEventBus.HttpApi.Host/IczpNet.RedisDistributedEventBus.HttpApi.Host.abppkg",
+      "folder": "host"
+    },
+    "IczpNet.RedisDistributedEventBus.HttpApi.Client.ConsoleTestApp": {
+      "path": "test/IczpNet.RedisDistributedEventBus.HttpApi.Client.ConsoleTestApp/IczpNet.RedisDistributedEventBus.HttpApi.Client.ConsoleTestApp.abppkg",
+      "folder": "test"
+    },
+    "IczpNet.RedisDistributedEventBus.AuthServer": {
+      "path": "host/IczpNet.RedisDistributedEventBus.AuthServer/IczpNet.RedisDistributedEventBus.AuthServer.abppkg",
+      "folder": "host"
+    },
+    "IczpNet.RedisDistributedEventBus.Host.Shared": {
+      "path": "host/IczpNet.RedisDistributedEventBus.Host.Shared/IczpNet.RedisDistributedEventBus.Host.Shared.abppkg",
+      "folder": "host"
+    }
+  }
+}

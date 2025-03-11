@@ -1,0 +1,7 @@
+{
+  "modules": {
+    "IczpNet.RedisDistributedEventBus": {
+      "path": "IczpNet.RedisDistributedEventBus.abpmdl"
+    }
+  }
+}

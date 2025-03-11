@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>IczpNet.RedisDistributedEventBus</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\IczpNet.RedisDistributedEventBus.Application\IczpNet.RedisDistributedEventBus.Application.csproj" />
+    <ProjectReference Include="..\IczpNet.RedisDistributedEventBus.Domain.Tests\IczpNet.RedisDistributedEventBus.Domain.Tests.csproj" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+  </ItemGroup>
+
+</Project>

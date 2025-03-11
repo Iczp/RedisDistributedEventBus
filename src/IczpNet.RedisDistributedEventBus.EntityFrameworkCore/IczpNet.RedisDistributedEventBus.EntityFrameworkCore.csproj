@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>IczpNet.RedisDistributedEventBus</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.EntityFrameworkCore" Version="8.1.4" />
+    <ProjectReference Include="..\IczpNet.RedisDistributedEventBus.Domain\IczpNet.RedisDistributedEventBus.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
