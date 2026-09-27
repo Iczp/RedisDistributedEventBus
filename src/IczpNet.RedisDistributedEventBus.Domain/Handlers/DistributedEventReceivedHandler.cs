@@ -4,7 +4,6 @@ using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.EventBus;
 using Volo.Abp.Domain.Services;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 using Volo.Abp.Json;
 
 namespace IczpNet.RedisDistributedEventBus.Handlers;

@@ -67,7 +67,7 @@ public class RedisDistributedEventBus(
 
         foreach (var type in AbpDistributedEventBusOptions.Handlers)
         {
-            Logger.LogWarning($"{type.FullName} Subscribed.");
+            Logger.LogWarning($"Subscribed Handler:{type.FullName}");
         }
     }
 
