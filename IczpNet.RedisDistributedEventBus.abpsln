@@ -3,5 +3,10 @@
     "IczpNet.RedisDistributedEventBus": {
       "path": "IczpNet.RedisDistributedEventBus.abpmdl"
     }
+  },
+  "id": "758ac78a-3a28-45ac-a9c1-de5cfb38b90f",
+  "versions": {
+    "AbpFramework": "10.6.1",
+    "AbpCommercial": "10.6.1"
   }
 }
