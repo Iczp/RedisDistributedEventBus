@@ -15,7 +15,7 @@
     <PackageIcon>IczpNet.jpg</PackageIcon>
     <Copyright>(c) iczp.net</Copyright>
     <Description>RedisDistributedEventBus for abp.</Description>
-    <Version>0.1.0</Version>
+    <Version>0.0.10</Version>
   </PropertyGroup>
 
   <ItemGroup>
